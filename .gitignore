@@ -1,0 +1,62 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# VSCode/IDEA/PyCharm settings
+.vscode/
+.idea/
+
+# macOS + Linux
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+
+# Uploaded files
+uploads/*
+!uploads/.gitkeep
+
+# Cache, logs, test output
+*.log
+*.out
+*.tmp
+.cache/
+*.coverage
+coverage.xml
+
+# Compiled C files
+*.so
+
+# Pytest
+.pytest_cache/
+
+# Profiling report (if generated)
+uploads/profiling_report.html
+
+# FastAPI static/temp/generated
+app/static/temp/
+app/static/generated/
+
+# Optional: dotenv files
+.env
+.env.*
+
+# Ignore your data
+*.csv
+*.xlsx
+*.pkl
+
+# Ignore __init__ backup files
+*~ 

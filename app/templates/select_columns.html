@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Columns - AutoSight</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .selection-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .selection-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-control {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-control:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-control.secondary {
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            box-shadow: 0 4px 15px rgba(253, 121, 168, 0.2);
+        }
+
+        .btn-control.secondary:hover {
+            box-shadow: 0 8px 25px rgba(253, 121, 168, 0.4);
+        }
+
+        .selection-counter {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: #333;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .columns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .column-card {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .column-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .column-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .column-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .column-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f4ff, #e6f2ff);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.25);
+        }
+
+        .column-card.selected::before {
+            transform: scaleX(1);
+        }
+
+        .column-checkbox {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .column-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .column-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .column-card.selected .column-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transform: scale(1.1);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .column-info {
+            flex: 1;
+        }
+
+        .column-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .column-type {
+            font-size: 0.9rem;
+            color: #666;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .column-card.selected .column-type {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #28a745;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .column-card.selected .checkmark {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .chart-type-section {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 25px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-type-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .chart-type-icon {
+            font-size: 2.2rem;
+            margin-right: 20px;
+            padding: 18px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .chart-type-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chart-type-description {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .chart-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+        }
+
+        .chart-option {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .chart-option.selected {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.25);
+        }
+
+        .chart-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .chart-option-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .chart-option-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .chart-option-desc {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .submit-section {
+            text-align: center;
+            padding-top: 35px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            border-radius: 50px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 280px;
+            justify-content: center;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 45px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-submit i {
+            font-size: 1.3rem;
+        }
+
+        .warning-message {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            color: #d63031;
+            padding: 18px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            box-shadow: 0 8px 25px rgba(214, 48, 49, 0.2);
+        }
+
+        .warning-message.show {
+            display: flex;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Profiling Report Section */
+        .profiling-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 35px;
+            margin-top: 35px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .profiling-link {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            color: white;
+            text-decoration: none;
+            padding: 20px 35px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 30px rgba(253, 121, 168, 0.3);
+            margin-top: 20px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .profiling-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(253, 121, 168, 0.4);
+            color: white;
+        }
+
+        .profiling-link:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .profiling-link i {
+            margin-right: 12px;
+            font-size: 1.3rem;
+        }
+
+        .profiling-icon {
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8rem;
+        }
+
+        /* Progress Bar Styles */
+        .progress-container {
+            margin-top: 25px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #fd79a8, #fdcb6e);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .download-complete {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0, 184, 148, 0.3);
+        }
+
+        .download-complete.show {
+            display: flex;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .open-file-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 15px;
+        }
+
+        .open-file-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .selection-form {
+                padding: 25px;
+            }
+
+            .selection-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .control-group {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .columns-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-options {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-submit {
+                width: 100%;
+                padding: 18px 30px;
+                font-size: 1.2rem;
+            }
+
+            .download-complete {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .open-file-btn {
+                margin-left: 0;
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-columns"></i> Select Columns to Visualize</h1>
+            <p>Choose the data columns you want to include in your analysis</p>
+        </div>
+
+        <form action="/visualize" method="post" class="selection-form" id="selectionForm">
+            <!-- Selection Controls -->
+            <div class="selection-controls">
+                <div class="control-group">
+                    <button type="button" class="btn-control" onclick="selectAll()">
+                        <i class="fas fa-check-double"></i>
+                        Select All
+                    </button>
+                    <button type="button" class="btn-control secondary" onclick="deselectAll()">
+                        <i class="fas fa-times"></i>
+                        Deselect All
+                    </button>
+                </div>
+                <div class="selection-counter" id="selectionCounter">
+                    <i class="fas fa-list"></i>
+                    <span id="selectedCount">{{ columns|length }}</span> of {{ columns|length }} columns selected
+                </div>
+            </div>
+
+            <!-- Warning Message -->
+            <div class="warning-message" id="warningMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                Please select at least one column to visualize
+            </div>
+
+            <!-- Columns Grid -->
+            <div class="columns-grid">
+                {% for col in columns %}
+                <div class="column-card selected" onclick="toggleColumn(this)">
+                    <input type="checkbox" name="selected_columns" value="{{ col }}" class="column-checkbox" checked>
+                    <div class="column-content">
+                        <div class="column-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="column-info">
+                            <div class="column-name">{{ col }}</div>
+                            <div class="column-type">Column</div>
+                        </div>
+                    </div>
+                    <div class="checkmark">
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Chart Type Selection -->
+            <div class="chart-type-section">
+                <div class="chart-type-header">
+                    <div class="chart-type-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div>
+                        <div class="chart-type-title">Choose Visualization Type</div>
+                        <div class="chart-type-description">Select how you want your data to be displayed</div>
+                    </div>
+                </div>
+
+                <div class="chart-options">
+                    <div class="chart-option {% if chart_type == 'bar' or not chart_type %}selected{% endif %}" onclick="selectChartType(this, 'bar')">
+                        <input type="radio" name="chart_type" value="bar" {% if chart_type == "bar" or not chart_type %}checked{% endif %}>
+                        <div class="chart-option-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="chart-option-name">Bar Chart</div>
+                        <div class="chart-option-desc">Perfect for comparing categories</div>
+                    </div>
+
+                    <div class="chart-option {% if chart_type == 'pie' %}selected{% endif %}" onclick="selectChartType(this, 'pie')">
+                        <input type="radio" name="chart_type" value="pie" {% if chart_type == "pie" %}checked{% endif %}>
+                        <div class="chart-option-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="chart-option-name">Pie Chart</div>
+                        <div class="chart-option-desc">Great for showing proportions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="submit-section">
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-eye"></i>
+                    Visualize Selected Data
+                </button>
+            </div>
+        </form>
+
+        <!-- Profiling Report Section -->
+        <div class="profiling-container">
+            <div class="card-header">
+                <div class="card-header-left">
+                    <i class="fas fa-file-alt profiling-icon"></i>
+                    <h2 class="card-title">Full Profiling Report</h2>
+                </div>
+            </div>
+            <p style="color: #666; margin-bottom: 15px; font-size: 1.1rem;">
+                Get a comprehensive analysis of your dataset with detailed statistics, distributions, and insights.
+            </p>
+            <button class="profiling-link" id="downloadBtn" onclick="generateProfilingReport()">
+                <i class="fas fa-download"></i>
+                Generate & Download Profiling Report
+            </button>
+
+            <!-- Progress Bar -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Generating profiling report...</div>
+            </div>
+
+            <!-- Download Complete Message -->
+            <div class="download-complete" id="downloadComplete">
+                <i class="fas fa-check-circle"></i>
+                <span>Report generated successfully!</span>
+                <button class="open-file-btn" onclick="openProfilingReport()">
+                    <i class="fas fa-external-link-alt"></i>
+                    View Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedColumns = {{ columns|length }};
+        const totalColumns = {{ columns|length }};
+        let reportGenerated = false;
+
+        // Toggle column selection
+        function toggleColumn(card) {
+            const checkbox = card.querySelector('.column-checkbox');
+            const isSelected = card.classList.contains('selected');
+            
+            if (isSelected) {
+                card.classList.remove('selected');
+                checkbox.checked = false;
+                selectedColumns--;
+            } else {
+                card.classList.add('selected');
+                checkbox.checked = true;
+                selectedColumns++;
+            }
+            
+            updateSelectionCounter();
+            validateSelection();
+        }
+
+        // Select all columns
+        function selectAll() {
+            const cards = document.querySelectorAll('.column-card');
+            const checkboxes = document.querySelectorAll('.column-checkbox');
+            
+            cards.forEach(card => card.classList.add('selected'));
+            checkboxes.forEach(checkbox => checkbox.checked = true);
+            
+            selectedColumns = totalColumns;
+            updateSelectionCounter();
+            validateSelection();
+            
+            // Visual feedback
+            const btn = event.target.closest('.btn-control');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> All Selected';
+            btn.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            }, 1500);
+        }
+
+        // Deselect all columns
+        function deselectAll() {
+            const cards = document.querySelectorAll('.column-card');
+            const checkboxes = document.querySelectorAll('.column-checkbox');
+            
+            cards.forEach(card => card.classList.remove('selected'));
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            
+            selectedColumns = 0;
+            updateSelectionCounter();
+            validateSelection();
+        }
+
+        // Update selection counter
+        function updateSelectionCounter() {
+            const counter = document.getElementById('selectedCount');
+            counter.textContent = selectedColumns;
+            
+            const counterElement = document.getElementById('selectionCounter');
+            if (selectedColumns === 0) {
+                counterElement.style.borderColor = '#ff6b6b';
+                counterElement.style.background = 'rgba(255, 107, 107, 0.1)';
+            } else {
+                counterElement.style.borderColor = 'rgba(102, 126, 234, 0.2)';
+                counterElement.style.background = 'rgba(255, 255, 255, 0.9)';
+            }
+        }
+
+        // Validate selection
+        function validateSelection() {
+            const submitBtn = document.getElementById('submitBtn');
+            const warningMessage = document.getElementById('warningMessage');
+            
+            if (selectedColumns === 0) {
+                submitBtn.disabled = true;
+                warningMessage.classList.add('show');
+            } else {
+                submitBtn.disabled = false;
+                warningMessage.classList.remove('show');
+            }
+        }
+
+        // Select chart type
+        function selectChartType(option, type) {
+            // Remove selected class from all options
+            document.querySelectorAll('.chart-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            option.classList.add('selected');
+            
+            // Check the radio button
+            option.querySelector('input[type="radio"]').checked = true;
+            
+            // Visual feedback
+            option.style.animation = 'pulse 0.6s ease-in-out';
+            setTimeout(() => {
+                option.style.animation = '';
+            }, 600);
+        }
+
+        // Form submission with loading state
+        document.getElementById('selectionForm').addEventListener('submit', function(e) {
+            if (selectedColumns === 0) {
+                e.preventDefault();
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Visualizations...';
+            submitBtn.disabled = true;
+            
+            // Re-enable after 5 seconds if form doesn't submit
+            setTimeout(() => {
+                if (submitBtn.disabled) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            }, 5000);
+        });
+
+        // Generate profiling report
+        async function generateProfilingReport() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const downloadComplete = document.getElementById('downloadComplete');
+            
+            // Disable download button and show progress
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Report...';
+            progressContainer.style.display = 'block';
+            
+            // Simulate progress while the backend generates the report
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 8 + 2;
+                if (progress > 90) progress = 90; // Don't complete until we get response
+                
+                progressFill.style.width = progress + '%';
+                
+                if (progress < 20) {
+                    progressText.textContent = 'Loading dataset...';
+                } else if (progress < 40) {
+                    progressText.textContent = 'Analyzing data structure...';
+                } else if (progress < 60) {
+                    progressText.textContent = 'Generating statistical insights...';
+                } else if (progress < 80) {
+                    progressText.textContent = 'Creating visualizations...';
+                } else {
+                    progressText.textContent = 'Finalizing report...';
+                }
+            }, 200);
+
+            try {
+                // Make request to your backend
+                const response = await fetch('/profiling-report');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // Complete the progress
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Report generated successfully!';
+                
+                // Get the HTML content
+                const htmlContent = await response.text();
+                
+                // Create blob and download
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                // Trigger download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'autosight-profiling-report.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Store URL for viewing
+                window.reportUrl = url;
+                reportGenerated = true;
+                
+                // Show completion message
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    downloadComplete.classList.add('show');
+                    
+                    // Reset download button
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Generate & Download Profiling Report';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error generating report:', error);
+                clearInterval(progressInterval);
+                
+                // Show error state
+                progressText.textContent = 'Error generating report. Please try again.';
+                progressFill.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
+                
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Generate & Download Profiling Report';
+                    progressFill.style.background = 'linear-gradient(135deg, #fd79a8, #fdcb6e)';
+                }, 3000);
+            }
+        }
+
+        // Open profiling report
+        function openProfilingReport() {
+            if (window.reportUrl) {
+                window.open(window.reportUrl, '_blank');
+            } else {
+                // Fallback: open the backend route directly
+                window.open('/profiling-report', '_blank');
+            }
+        }
+
+        // Add smooth animations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const columnCards = document.querySelectorAll('.column-card');
+            columnCards.forEach((card, index) => {
+                card.style.animationDelay = `${0.1 * index}s`;
+                card.style.animation = 'fadeInUp 0.6s ease-out both';
+            });
+            
+            // Initialize validation
+            validateSelection();
+        });
+
+        // Add keyboard support
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'a') {
+                    e.preventDefault();
+                    selectAll();
+                } else if (e.key === 'd') {
+                    e.preventDefault();
+                    deselectAll();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
